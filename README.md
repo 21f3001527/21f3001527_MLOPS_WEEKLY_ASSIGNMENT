@@ -19,7 +19,7 @@ python3 -m venv .env && source .env/bin/activate
 pip install -r requirements.txt
 pip install dvc[gs]
 
-dvc remote add -d gcsremote gs://<your_bucket>/iris_dvc
+dvc remote add -d gcsremote gs://dvc-iris-21f3001527/iris_dvc
 dvc remote modify gcsremote credentialpath <path_to_service_account.json>
 ```
 
