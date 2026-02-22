@@ -1,0 +1,6 @@
+google-cloud-storage
+pandas
+scikit-learn
+joblib
+dvc
+
