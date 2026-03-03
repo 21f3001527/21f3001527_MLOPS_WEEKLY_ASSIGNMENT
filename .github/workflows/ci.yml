@@ -37,11 +37,16 @@ jobs:
           python -m pytest test_model.py -v > test_output.txt 2>&1 || true
           cat test_output.txt
 
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
       - name: Post CML Report as Comment
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install cml
+          npm install -g @dvcorg/cml
           echo "## 🧪 Sanity Test Report" > report.md
           echo '```' >> report.md
           cat test_output.txt >> report.md
