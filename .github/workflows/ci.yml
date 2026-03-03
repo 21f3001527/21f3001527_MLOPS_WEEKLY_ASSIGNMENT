@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install pytest scikit-learn numpy joblib
+          pip install pytest scikit-learn numpy joblib pandas
 
       - name: Train Model
         run: python train.py
@@ -47,4 +47,3 @@ jobs:
           cat test_output.txt >> report.md
           echo '```' >> report.md
           cml comment create report.md
-
