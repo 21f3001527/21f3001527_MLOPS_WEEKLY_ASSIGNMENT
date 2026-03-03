@@ -47,7 +47,7 @@ jobs:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install -g @dvcorg/cml
-          echo "## 🧪 Sanity Test Report" > report.md
+          echo "## Sanity Test Report" > report.md
           echo '```' >> report.md
           cat test_output.txt >> report.md
           echo '```' >> report.md
