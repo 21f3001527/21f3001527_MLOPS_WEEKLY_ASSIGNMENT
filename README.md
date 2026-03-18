@@ -1,9 +1,9 @@
 # 21f3001527_MLOPS_WEEKLY_ASSIGNMENT
 
-# Week 4 - Integrating CI into the IRIS ML Pipeline
+# Week 5 - Integrating MLflow into the IRIS ML Pipeline
 
 ## Overview
-This week we integrated Continuous Integration (CI) into the IRIS classification pipeline using GitHub Actions. The CI pipeline automatically runs unit tests, trains the model, and publishes test reports as comments on every push and pull request using CML (Continuous Machine Learning).
+This week we integrated MLflow experiment tracking and model registry into the IRIS classification pipeline. The pipeline now logs hyperparameters, evaluation metrics, and trained models to MLflow for every training run, enabling experiment comparison and centralized model management.
 
 ---
 
@@ -12,78 +12,80 @@ This week we integrated Continuous Integration (CI) into the IRIS classification
 21f3001527_MLOPS_WEEKLY_ASSIGNMENT/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml          # GitHub Actions CI workflow
+│       └── ci.yml          # GitHub Actions CI workflow with MLflow
 ├── .dvc/                   # DVC configuration
-├── artifacts.dvc           # DVC tracked model artifacts
-├── data.dvc                # DVC tracked dataset
-├── model.pkl               # Trained Random Forest model
-├── test_model.py           # Unit tests for sanity testing
-├── train.py                # Model training script
+├── data.dvc                # DVC tracked dataset (data only)
+├── data.csv                # IRIS dataset
+├── test_model.py           # Unit tests fetching model from MLflow registry
+├── train.py                # Model training script with MLflow tracking
 ├── requirements.txt        # Python dependencies
 └── README.md
 ```
 
 ---
 
-### Part A - Codebase in GitHub Repo
-- Verified Week 2 codebase was available in `week_02` branch
-- Created `week_04` branch from `week_02`
-- Pushed all code to GitHub remote repository
+## What Changed from Week 4
 
-### Part B - Unit Tests for Sanity Testing
-- Trained the IRIS classification model using `train.py`
-- Model saved as `model.pkl` using `joblib`
-- Wrote unit tests in `test_model.py` using `unittest` framework
-- 3 tests written and verified locally:
-  - `test_model_loads` - checks model loads correctly
-  - `test_single_prediction` - checks prediction on single sample
-  - `test_batch_prediction` - checks predictions on multiple samples
-- All 3 tests passed locally before pushing to GitHub
-
-### Part C - GitHub Actions CI Workflow
-- Created `.github/workflows/ci.yml`
-- Workflow triggers on:
-  - Every push to any branch
-  - Every pull request to any branch
-- CI pipeline steps:
-  1. Checkout code
-  2. Set up Python 3.9
-  3. Install dependencies (pytest, scikit-learn, numpy, joblib, pandas)
-  4. Train the model
-  5. Run sanity tests
-  6. Setup Node.js for CML
-  7. Post CML test report as comment on commit/PR
+| Component | Week 4 | Week 5 |
+|-----------|--------|--------|
+| Model storage | DVC (`artifacts.dvc`) | MLflow Model Registry |
+| Experiment tracking | None | MLflow |
+| Hyperparameter tuning | Single run | 6 combinations |
+| Model loading in tests | Local `model.pkl` | MLflow Registry |
+| CI model source | DVC | MLflow (sqlite) |
 
 ---
 
-## CI Workflow
+### Task 1 - Hyperparameter Tuning
+- Varied `n_estimators`: [50, 100, 200]
+- Varied `max_depth`: [3, 5]
+- Produced **6 training runs** with different configurations
 
-```yaml
-name: IRIS ML CI
+### Task 2 - Log Experiments with MLflow
+For each run logged:
+- **Parameters**: n_estimators, max_depth, random_state
+- **Metrics**: accuracy, precision, f1_score
+- **Model**: saved as MLflow artifact
+- **Tag**: Training Info
 
-on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches:
-      - '**'
+### Task 3 - Compare Experiments in MLflow UI
+- Ran 6 experiments with different hyperparameter configurations
+- Compared metrics side-by-side in MLflow Tracking UI
+- Best accuracy achieved: **100%** (n_estimators=200, max_depth=5)
 
-permissions:
-  contents: write
-  pull-requests: write
+### Task 4 - Remove Model Dependency from DVC
+- Removed `artifacts.dvc` and `model.pkl` from DVC tracking
+- Models now stored exclusively in MLflow Model Registry
+- DVC continues to track `data.csv` only
 
-jobs:
-  test-and-report:
-    runs-on: ubuntu-latest
-    steps:
-      - Checkout Code
-      - Set Up Python 3.9
-      - Install Dependencies
-      - Train Model
-      - Run Sanity Tests
-      - Setup Node
-      - Post CML Report as Comment
+### Task 5 - Fetch Models from MLflow for Evaluation
+- Updated `test_model.py` to load model from MLflow registry
+- Model resolved by registered name: `IRIS-classifier-rf`
+- No local path or DVC dependency
+
+### Task 6  - MLflow in CI
+- Updated GitHub Actions CI to use MLflow with sqlite tracking
+- CI trains model → logs to MLflow → runs tests against registry model
+- CML posts test report as comment on every push/PR
+
+---
+
+## MLflow Experiment
+
+### Tracking URI
+```
+http://localhost:8100  # local
+sqlite:///mlflow.db    # CI
+```
+
+### Experiment Name
+```
+MLflow with IRIS Dataset
+```
+
+### Registered Model
+```
+IRIS-classifier-rf
 ```
 
 ---
@@ -93,30 +95,27 @@ jobs:
 The `train.py` script:
 - Loads the IRIS dataset from `sklearn`
 - Splits data into train/test sets (80/20)
-- Trains a `RandomForestClassifier`
-- Evaluates accuracy on test set
-- Saves model as `model.pkl` using `joblib`
-- Saves metrics to `metrics.txt`
-
-**Achieved Accuracy: ~96.67%**
+- Runs hyperparameter tuning across 6 combinations
+- Logs each run to MLflow with params, metrics and model
+- Registers best model in MLflow Model Registry
 
 ---
 
 ## Unit Tests
-
-The `test_model.py` file contains:
-
 ```python
 class TestIrisModel(unittest.TestCase):
 
     def test_model_loads(self):
-        # Checks model loads without errors
+        # Loads model from MLflow registry
 
     def test_single_prediction(self):
-        # Checks single sample prediction returns valid class [0, 1, 2]
+        # Checks prediction on single sample
 
     def test_batch_prediction(self):
-        # Checks batch of 3 samples returns 3 predictions
+        # Checks predictions on multiple samples
+
+    def test_prediction_accuracy(self):
+        # Checks accuracy > 90%
 ```
 
 ### Running Tests Locally
@@ -126,49 +125,28 @@ python -m pytest test_model.py -v
 
 ### Expected Output
 ```
-test_model.py::TestIrisModel::test_batch_prediction PASSED   [ 33%]
-test_model.py::TestIrisModel::test_model_loads PASSED        [ 66%]
-test_model.py::TestIrisModel::test_single_prediction PASSED  [100%]
-================ 3 passed in 1.38s ================
+test_model.py::TestIrisModel::test_batch_prediction PASSED      [ 25%]
+test_model.py::TestIrisModel::test_model_loads PASSED           [ 50%]
+test_model.py::TestIrisModel::test_prediction_accuracy PASSED   [ 75%]
+test_model.py::TestIrisModel::test_single_prediction PASSED     [100%]
+================ 4 passed in 3.16s ================
 ```
 
 ---
 
-## CML Report
-CML (Continuous Machine Learning) automatically posts test results as a comment on every commit and pull request.
-
-Example CML comment posted automatically:
-```
-## Sanity Test Report
-===== test session starts =====
-test_model.py::TestIrisModel::test_batch_prediction PASSED   [ 33%]
-test_model.py::TestIrisModel::test_model_loads PASSED        [ 66%]
-test_model.py::TestIrisModel::test_single_prediction PASSED  [100%]
-================ 3 passed in 1.14s ================
-```
-
----
-
-## Pull Request Flow
-1. All week 4 work done on `week_04` branch
-2. Pull Request created: `week_04` → `main`
-3. CI automatically triggered on PR
-4. Both checks passed:
-   - IRIS ML CI / test-and-report (push) ✅
-   - IRIS ML CI / test-and-report (pull_request) ✅
-5. CML report posted as comment on PR
-6. PR successfully merged into `main`
-
----
-
-## How CI Fits Into the Pipeline
-
+## CI Workflow
 ```
 Git Push / PR
     ↓
 GitHub Actions
     ↓
-Train Model → Run pytest → CML Report
+Install Dependencies
+    ↓
+Train Model → Log to MLflow (sqlite)
+    ↓
+Fetch Model from MLflow Registry
+    ↓
+Run pytest → CML Report
     ↓
 Validated Pipeline ✅
 ```
@@ -176,13 +154,13 @@ Validated Pipeline ✅
 ---
 
 ## Tech Stack
-- **Python** 3.9
+- **Python** 3.10
 - **scikit-learn** - Model training
-- **joblib** - Model serialization
+- **MLflow** - Experiment tracking and model registry
 - **pytest / unittest** - Unit testing
 - **GitHub Actions** - CI/CD
 - **CML** - ML test reporting
-- **DVC** - Data and model versioning
+- **DVC** - Data versioning
 - **GCS** - Remote storage
 
 ---
