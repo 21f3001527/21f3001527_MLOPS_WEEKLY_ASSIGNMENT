@@ -1,4 +1,4 @@
-name: IRIS ML CI
+name: IRIS ML CI with MLflow
 
 on:
   push:
@@ -15,40 +15,45 @@ permissions:
 jobs:
   test-and-report:
     runs-on: ubuntu-latest
+    
+    env:
+      MLFLOW_TRACKING_URI: sqlite:///mlflow.db
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set Up Python
+      - name: Set Up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install Dependencies
         run: |
-          pip install pytest scikit-learn numpy joblib pandas
+          pip install scikit-learn pandas numpy joblib pytest mlflow
 
-      - name: Train Model
-        run: python train.py
-
-      - name: Run Sanity Test
+      - name: Train Model and Log to MLflow
         run: |
-          python -m pytest test_model.py -v > test_output.txt 2>&1 || true
-          cat test_output.txt
+          python train.py
+
+      - name: Run Sanity Tests fetching model from MLflow Registry
+        run: |
+          python -m pytest test_model.py -v 2>&1 | tee test_results.txt
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      - name: Post CML Report as Comment
+      - name: Post CML Report
         env:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install -g @dvcorg/cml
-          echo "## Sanity Test Report" > report.md
-          echo '```' >> report.md
-          cat test_output.txt >> report.md
-          echo '```' >> report.md
+          echo "## MLflow CI Test Report" > report.md
+          echo "### Test Results" >> report.md
+          cat test_results.txt >> report.md
+          echo "### MLflow Tracking" >> report.md
+          echo "- Tracking URI: sqlite:///mlflow.db" >> report.md
+          echo "- Model Registry: IRIS-classifier-rf" >> report.md
           cml comment create report.md
