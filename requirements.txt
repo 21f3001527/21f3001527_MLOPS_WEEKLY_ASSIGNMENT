@@ -3,4 +3,4 @@ uvicorn[standard]
 joblib
 numpy==2.4.3
 pandas
-scikit-learn==1.3.0
+scikit-learn==1.8.0
