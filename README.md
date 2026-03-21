@@ -61,7 +61,7 @@ curl -X POST http://34.73.134.197/predict/ \
 │   └── service.yaml                  # Kubernetes LoadBalancer
 └── .github/
     └── workflows/
-        └── cd.yml                    # GitHub Actions CD pipeline
+        └── main.yml                    # GitHub Actions CD pipeline
 ```
 
 ### Tech Stack
@@ -73,7 +73,4 @@ curl -X POST http://34.73.134.197/predict/ \
 
 ---
 
-## Week 05 - ML Pipeline with DVC + MLflow
-- Data versioning with DVC
-- Experiment tracking with MLflow
-- Model training and evaluation pipeline
+
