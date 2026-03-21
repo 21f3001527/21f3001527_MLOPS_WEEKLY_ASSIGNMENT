@@ -15,6 +15,7 @@ spec:
       containers:
       - name: iris-api
         image: us-central1-docker.pkg.dev/meta-territory-488805-q1/iris-repo/iris-api:v1
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         readinessProbe:

@@ -61,7 +61,7 @@ curl -X POST http://34.73.134.197/predict/ \
 │   └── service.yaml                  # Kubernetes LoadBalancer
 └── .github/
     └── workflows/
-        └── main.yml                    # GitHub Actions CD pipeline
+        └── cd.yml                    # GitHub Actions CD pipeline
 ```
 
 ### Tech Stack
@@ -72,5 +72,3 @@ curl -X POST http://34.73.134.197/predict/ \
 - **GitHub Actions** - CI/CD automation
 
 ---
-
-
