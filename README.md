@@ -1,74 +1,67 @@
-# MLOps Weekly Assignment - 21f3001527
+# Week 7: Stress Testing, Observability & Scaling the IRIS Pipeline
 
-## Week 06 - Continuous Deployment with Docker + GKE
+## Overview
+This assignment validates the deployed IRIS API under high concurrency using wrk, monitors Pod behavior through GCP Cloud Monitoring and Cloud Logging, observes Kubernetes autoscaling, and identifies bottlenecks when scaling is constrained.
 
-### Overview
-Containerized the IRIS inference API with Docker and deployed it to Google Kubernetes Engine (GKE) on GCP, automating the entire build, push, and deploy cycle through GitHub Actions.
-
-### Tasks Completed
-
-#### Task 1 - Pod vs Container
-- **Docker Container**: A running instance of a Docker image. Single isolated process with its own filesystem and network.
-- **Kubernetes Pod**: Smallest deployable unit in K8s. Wraps one or more containers sharing the same network and storage. K8s manages Pods, not raw containers.
-
-#### Task 2 - Dockerfile
-- Built Docker image using `python:3.11-slim`
-- Copies `model.joblib` and `main.py` into container
-- Serves predictions via `uvicorn` on port 8080
-
-#### Task 3 - GCP Service Account
-- Created `github-actions-sa` service account
-- Granted `artifactregistry.writer` and `container.developer` roles
-- Configured credentials as GitHub Actions secrets
-
-#### Task 4 - Build & Push via GitHub Actions
-- GitHub Actions workflow triggers on push to `week_06`
-- Builds Docker image and pushes to Google Artifact Registry
-- Image: `us-central1-docker.pkg.dev/meta-territory-488805-q1/iris-repo/iris-api`
-
-#### Task 5 - Deploy to GKE
-- Created GKE cluster `ml-cluster` in `us-east1-b`
-- Deployed using `k8s/deployment.yaml` and `k8s/service.yaml`
-- Live API endpoint: `http://34.73.134.197`
-
-### API Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Welcome message |
-| `/health` | GET | Health check |
-| `/predict/` | POST | Predict IRIS species |
-| `/docs` | GET | Swagger UI |
-
-### Test the API
-```bash
-# Health check
-curl http://34.73.134.197/health
-
-# Predict
-curl -X POST http://34.73.134.197/predict/ \
-  -H "Content-Type: application/json" \
-  -d '{"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4, "petal_width": 0.2}'
+## Repository Structure
 ```
-
-### File Structure
-```
-├── Dockerfile                        # Container definition
-├── main.py                           # FastAPI inference API
-├── model.joblib                      # Trained IRIS model
-├── requirements.txt                  # Python dependencies
+.
+├── .github/workflows/main.yml    # CI/CD pipeline with stress testing
 ├── k8s/
-│   ├── deployment.yaml               # Kubernetes Deployment
-│   └── service.yaml                  # Kubernetes LoadBalancer
-└── .github/
-    └── workflows/
-        └── cd.yml                    # GitHub Actions CD pipeline
+│   ├── deployment.yaml           # IRIS API deployment with resource limits
+│   ├── service.yaml              # LoadBalancer service
+│   ├── hpa.yaml                  # HPA - max 3 replicas (Task 3)
+│   └── hpa_constrained.yaml      # HPA - max 1 replica (Task 5)
+├── stress_test.lua               # wrk POST request script
+├── main.py                       # FastAPI IRIS app
+├── Dockerfile                    # Container definition
+└── requirements.txt              # Python dependencies
 ```
 
-### Tech Stack
-- **FastAPI** - Inference API framework
-- **Docker** - Containerization
-- **Google Artifact Registry** - Container image storage
-- **Google Kubernetes Engine** - Container orchestration
-- **GitHub Actions** - CI/CD automation
+## Tasks
 
----
+### Task 1: CI/CD with Stress Testing
+- Extended GitHub Actions workflow with a dedicated `stress-test` job
+- Runs automatically after successful deployment to GKE
+- Installs wrk on the runner and executes load tests against the live API
+
+### Task 2: High-Concurrency Traffic with wrk
+```bash
+wrk -t4 -c1000 -d30s --timeout 10s -s stress_test.lua http://<EXTERNAL_IP>/predict/
+```
+- 4 threads, 1000 concurrent connections, 30 second duration
+- Metrics recorded: requests/sec, average latency, error count
+
+### Task 3: Horizontal Pod Autoscaler (max 3 replicas)
+```bash
+kubectl apply -f k8s/hpa.yaml
+kubectl get hpa
+kubectl get pods
+```
+- minReplicas: 1, maxReplicas: 3
+- CPU utilization target: 50%
+- HPA scales pods up automatically under load
+
+### Task 4: GCP Cloud Monitoring & Cloud Logging
+- Observed CPU and memory usage across Pod replicas in real time
+- Filtered logs by Pod name in Logs Explorer
+- Identified load distribution across pods
+
+### Task 5: Bottleneck Analysis (max 1 replica vs max 3 replicas)
+```bash
+# Apply constrained HPA
+kubectl apply -f k8s/hpa_constrained.yaml
+
+# Run with 2000 connections
+wrk -t4 -c2000 -d30s --timeout 10s -s stress_test.lua http://<EXTERNAL_IP>/predict/
+```
+
+| Scenario | Replicas | Connections | Expected Result |
+|----------|----------|-------------|-----------------|
+| Task 3   | max 3    | 1000        | Lower latency, higher throughput |
+| Task 5   | max 1    | 2000        | Higher latency, more errors |
+
+## Key Findings
+- With maxReplicas: 3, the HPA distributes load across pods keeping latency low
+- With maxReplicas: 1, CPU saturates quickly causing latency spikes and errors
+- First bottleneck observed: CPU exhaustion leading to request queuing
