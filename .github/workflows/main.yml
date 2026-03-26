@@ -122,14 +122,10 @@ jobs:
           location: ${{ secrets.GKE_ZONE }}
 
       - name: Install wrk
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wrk
+        run: sudo apt-get update && sudo apt-get install -y wrk
 
       - name: Get Service External IP
-        id: get-ip
         run: |
-          echo "Waiting for external IP..."
           for i in {1..20}; do
             IP=$(kubectl get service iris-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
             if [ -n "$IP" ]; then
@@ -137,24 +133,46 @@ jobs:
               echo "Found IP: $IP"
               break
             fi
-            echo "Attempt $i: IP not ready, waiting 15s..."
+            echo "Attempt $i: waiting 15s..."
             sleep 15
           done
+          if [ -z "$IP" ]; then echo "ERROR: No external IP found" && exit 1; fi
 
-      - name: Run Stress Test - 1000 Connections (Task 2)
+      - name: Apply HPA max 3 replicas
+        run: kubectl apply -f k8s/hpa.yaml
+
+      - name: Run Stress Test - 1000 Connections (Task 2 and 3)
         run: |
-          echo "## Stress Test Results - 1000 Connections" 
+          echo "## Stress Test: 1000 connections, max 3 replicas"
           wrk -t4 -c1000 -d30s --timeout 10s \
-            -s <(echo '
-              wrk.method = "POST"
-              wrk.headers["Content-Type"] = "application/json"
-              wrk.body = "{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}"
-            ') \
+            -s stress_test.lua \
             http://$EXTERNAL_IP/predict/ 2>&1 | tee stress_test_1000.txt
-          cat stress_test_1000.txt
+          echo "--- HPA status ---"
+          kubectl get hpa
+          echo "--- Pod status ---"
+          kubectl get pods
+
+      - name: Apply constrained HPA max 1 replica
+        run: kubectl apply -f k8s/hpa_constrained.yaml
+
+      - name: Wait for HPA to settle
+        run: sleep 30
+
+      - name: Run Stress Test - 2000 Connections (Task 5)
+        run: |
+          echo "## Stress Test: 2000 connections, max 1 replica"
+          wrk -t4 -c2000 -d30s --timeout 10s \
+            -s stress_test.lua \
+            http://$EXTERNAL_IP/predict/ 2>&1 | tee stress_test_2000.txt
+          echo "--- HPA status constrained ---"
+          kubectl get hpa
+          echo "--- Pod status ---"
+          kubectl get pods
 
       - name: Upload Stress Test Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: stress-test-results
-          path: stress_test_1000.txt
+          path: |
+            stress_test_1000.txt
+            stress_test_2000.txt
