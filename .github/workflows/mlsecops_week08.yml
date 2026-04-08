@@ -1,0 +1,42 @@
+name: MLSecOps Week 08
+
+on:
+  push:
+    branches: [ week_08 ]
+
+jobs:
+  mlsecops-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: pip install mlflow scikit-learn pandas numpy matplotlib seaborn -q
+
+      - name: Run Data Poisoning
+        run: mkdir -p data && python poison_data.py
+
+      - name: Train & Log to MLflow
+        run: python train_log.py
+
+      - name: Analyze Results
+        run: python analyze.py
+
+      - name: Show MLflow Results
+        run: |
+          python -c "
+          import mlflow
+          runs = mlflow.search_runs(experiment_names=['MLSecOps_IRIS_Poisoning'])
+          print(f'Total runs: {len(runs)}')
+          print(runs[['params.poison_level_pct','metrics.accuracy','metrics.f1_score']].sort_values('params.poison_level_pct').to_string(index=False))
+          "
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: mlsecops-week08-results
+          path: data/
