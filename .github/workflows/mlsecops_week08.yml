@@ -26,15 +26,6 @@ jobs:
       - name: Analyze Results
         run: python analyze.py
 
-      - name: Show MLflow Results
-        run: |
-          python -c "
-          import mlflow
-          runs = mlflow.search_runs(experiment_names=['MLSecOps_IRIS_Poisoning'])
-          print(f'Total runs: {len(runs)}')
-          print(runs[['params.poison_level_pct','metrics.accuracy','metrics.f1_score']].sort_values('params.poison_level_pct').to_string(index=False))
-          "
-
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
