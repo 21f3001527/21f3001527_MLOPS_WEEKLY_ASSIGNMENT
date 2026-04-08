@@ -38,7 +38,6 @@ def train_and_log(csv_path, poison_level):
         report = classification_report(y_test, y_pred, target_names=['Setosa','Versicolor','Virginica'])
         rpath = f"data/report_{poison_level}pct.txt"
         open(rpath,'w').write(f"Poison: {poison_level}%\n\n" + report)
-        mlflow.log_artifact(rpath)
         print(f"Poison {poison_level:>2}% | Acc: {acc:.4f} | Prec: {prec:.4f} | Rec: {rec:.4f} | F1: {f1:.4f}")
 
 for path, lvl in [("data/iris_clean.csv",0),("data/iris_poisoned_5.csv",5),("data/iris_poisoned_10.csv",10),("data/iris_poisoned_50.csv",50)]:
