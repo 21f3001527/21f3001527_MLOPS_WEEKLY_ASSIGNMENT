@@ -35,7 +35,6 @@ def train_and_log(csv_path, poison_level):
         mlflow.log_metric("precision", prec)
         mlflow.log_metric("recall",    rec)
         mlflow.log_metric("f1_score",  f1)
-        mlflow.sklearn.log_model(model, "model")
         report = classification_report(y_test, y_pred, target_names=['Setosa','Versicolor','Virginica'])
         rpath = f"data/report_{poison_level}pct.txt"
         open(rpath,'w').write(f"Poison: {poison_level}%\n\n" + report)
