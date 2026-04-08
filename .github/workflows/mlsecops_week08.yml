@@ -21,7 +21,11 @@ jobs:
         run: mkdir -p data && python poison_data.py
 
       - name: Train & Log to MLflow
+        env:
+          MLFLOW_TRACKING_URI: ./mlruns
         run: python train_log.py
 
       - name: Analyze Results
+        env:
+          MLFLOW_TRACKING_URI: ./mlruns
         run: python analyze.py
