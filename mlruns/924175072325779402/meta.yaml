@@ -1,0 +1,7 @@
+artifact_location: /home/jupyter/21f3001527_MLOPS_WEEKLY_ASSIGNMENT/21f3001527_MLOPS_WEEKLY_ASSIGNMENT/mlruns/924175072325779402
+creation_time: 1775617617283
+experiment_id: '924175072325779402'
+last_update_time: 1775617617283
+lifecycle_stage: active
+name: MLSecOps_IRIS_Poisoning
+workspace: default

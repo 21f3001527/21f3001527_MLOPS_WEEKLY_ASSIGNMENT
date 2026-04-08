@@ -1,0 +1,10 @@
+artifact_location: /home/jupyter/21f3001527_MLOPS_WEEKLY_ASSIGNMENT/21f3001527_MLOPS_WEEKLY_ASSIGNMENT/mlruns/924175072325779402/models/m-3d40d33cfe8941a8938a931d3891c446/artifacts
+creation_timestamp: 1775617625572
+experiment_id: '924175072325779402'
+last_updated_timestamp: 1775617628999
+model_id: m-3d40d33cfe8941a8938a931d3891c446
+model_type: null
+name: model
+source_run_id: 773d9c1c80e34ecf89fa6da51555762a
+status: 2
+status_message: null

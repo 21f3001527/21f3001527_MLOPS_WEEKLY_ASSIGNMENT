@@ -1,0 +1,11 @@
+Poison: 50%
+
+              precision    recall  f1-score   support
+
+      Setosa       0.86      0.60      0.71        10
+  Versicolor       0.50      0.60      0.55        10
+   Virginica       0.55      0.60      0.57        10
+
+    accuracy                           0.60        30
+   macro avg       0.63      0.60      0.61        30
+weighted avg       0.63      0.60      0.61        30

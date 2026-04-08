@@ -1,0 +1,14 @@
+artifact_uri: /home/jupyter/21f3001527_MLOPS_WEEKLY_ASSIGNMENT/21f3001527_MLOPS_WEEKLY_ASSIGNMENT/mlruns/924175072325779402/773d9c1c80e34ecf89fa6da51555762a/artifacts
+end_time: 1775617629013
+entry_point_name: ''
+experiment_id: '924175072325779402'
+lifecycle_stage: active
+run_id: 773d9c1c80e34ecf89fa6da51555762a
+run_name: poison_10pct
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1775617625394
+status: 3
+tags: []
+user_id: jupyter
