@@ -1,188 +1,88 @@
 # 21f3001527_MLOPS_WEEKLY_ASSIGNMENT
 
-# Week 4 - Integrating CI into the IRIS ML Pipeline
-
-## Overview
-This week we integrated Continuous Integration (CI) into the IRIS classification pipeline using GitHub Actions. The CI pipeline automatically runs unit tests, trains the model, and publishes test reports as comments on every push and pull request using CML (Continuous Machine Learning).
-
 ---
 
-## Repository Structure
-```
+## Week 9 — Explainability, Fairness & Drift Detection
+
+### Overview
+This week we introduced explainability, fairness auditing, and drift monitoring into the IRIS classification pipeline using SHAP, Fairlearn, and KS statistical tests.
+
+### Repository Structure
+
 21f3001527_MLOPS_WEEKLY_ASSIGNMENT/
-├── .github/
-│   └── workflows/
-│       └── ci.yml          # GitHub Actions CI workflow
-├── .dvc/                   # DVC configuration
-├── artifacts.dvc           # DVC tracked model artifacts
-├── data.dvc                # DVC tracked dataset
-├── model.pkl               # Trained Random Forest model
-├── test_model.py           # Unit tests for sanity testing
-├── train.py                # Model training script
-├── requirements.txt        # Python dependencies
+├── task1_introduce_location.py   # Adds location sensitive attribute
+├── task2_fairness_analysis.py    # Fairlearn MetricFrame fairness audit
+├── task3_shap_explainability.py  # SHAP summary plots
+├── task4_drift_detection.py      # KS test drift detection
+├── model_card.md                 # Task 5 - Model Card
+├── run_pipeline.sh               # Runs all tasks at once
+├── week9_data.pkl                # Saved train/test data
+├── shap_all_classes.png          # SHAP plot for all classes
+├── shap_virginica.png            # SHAP plot for Virginica
+├── drift_detection.png           # Drift detection plot
+├── requirements.txt              # Python dependencies
 └── README.md
-```
 
----
 
-### Part A - Codebase in GitHub Repo
-- Verified Week 2 codebase was available in `week_02` branch
-- Created `week_04` branch from `week_02`
-- Pushed all code to GitHub remote repository
+### Task 1 — Introduce Location Attribute
+- Added `location` column (randomly assigned 0 or 1) to IRIS dataset
+- Model trained on original 4 features only
+- Location used only as sensitive attribute for fairness auditing
 
-### Part B - Unit Tests for Sanity Testing
-- Trained the IRIS classification model using `train.py`
-- Model saved as `model.pkl` using `joblib`
-- Wrote unit tests in `test_model.py` using `unittest` framework
-- 3 tests written and verified locally:
-  - `test_model_loads` - checks model loads correctly
-  - `test_single_prediction` - checks prediction on single sample
-  - `test_batch_prediction` - checks predictions on multiple samples
-- All 3 tests passed locally before pushing to GitHub
+### Task 2 — Fairness Analysis with Fairlearn
+- Used Fairlearn `MetricFrame` with `location` as sensitive attribute
+- Metrics disaggregated by location group (0 and 1)
 
-### Part C - GitHub Actions CI Workflow
-- Created `.github/workflows/ci.yml`
-- Workflow triggers on:
-  - Every push to any branch
-  - Every pull request to any branch
-- CI pipeline steps:
-  1. Checkout code
-  2. Set up Python 3.9
-  3. Install dependencies (pytest, scikit-learn, numpy, joblib, pandas)
-  4. Train the model
-  5. Run sanity tests
-  6. Setup Node.js for CML
-  7. Post CML test report as comment on commit/PR
+| Location | Accuracy | Precision | Recall |
+|---|---|---|---|
+| Group 0 | 0.8571 | 0.8889 | 0.9048 |
+| Group 1 | 0.9375 | 0.9167 | 0.9444 |
+| Gap | 0.0804 | 0.0278 | 0.0397 |
 
----
+> Gap is due to random test-split variation, not real bias.
 
-## CI Workflow
+### Task 3 — SHAP Explainability
+- Generated SHAP summary plots for all 3 IRIS classes
+- Virginica finding: petal length & petal width are strongest predictors
+- Large petal values (red dots on right) strongly push model toward Virginica
 
-```yaml
-name: IRIS ML CI
+### Task 4 — Drift Detection
+- Simulated production data by shifting petal feature distributions
+- Used Kolmogorov-Smirnov (KS) test to detect drift
 
-on:
-  push:
-    branches:
-      - '**'
-  pull_request:
-    branches:
-      - '**'
+| Feature | KS Stat | p-value | Drifted? |
+|---|---|---|---|
+| sepal length | 0.0000 | 1.0000 | No |
+| sepal width | 0.0000 | 1.0000 | No |
+| petal length | 0.4167 | 0.0000 | Yes |
+| petal width | 0.4250 | 0.0000 | Yes |
 
-permissions:
-  contents: write
-  pull-requests: write
+> Retraining triggered when KS p-value < 0.05
 
-jobs:
-  test-and-report:
-    runs-on: ubuntu-latest
-    steps:
-      - Checkout Code
-      - Set Up Python 3.9
-      - Install Dependencies
-      - Train Model
-      - Run Sanity Tests
-      - Setup Node
-      - Post CML Report as Comment
-```
+### Task 5 — Model Card
+- Written in `model_card.md`
+- Covers intended use, training data, performance metrics, SHAP findings, drift results, known limitations and fairness considerations
 
----
-
-## Model Training
-
-The `train.py` script:
-- Loads the IRIS dataset from `sklearn`
-- Splits data into train/test sets (80/20)
-- Trains a `RandomForestClassifier`
-- Evaluates accuracy on test set
-- Saves model as `model.pkl` using `joblib`
-- Saves metrics to `metrics.txt`
-
-**Achieved Accuracy: ~96.67%**
-
----
-
-## Unit Tests
-
-The `test_model.py` file contains:
-
-```python
-class TestIrisModel(unittest.TestCase):
-
-    def test_model_loads(self):
-        # Checks model loads without errors
-
-    def test_single_prediction(self):
-        # Checks single sample prediction returns valid class [0, 1, 2]
-
-    def test_batch_prediction(self):
-        # Checks batch of 3 samples returns 3 predictions
-```
-
-### Running Tests Locally
+### How to Run
 ```bash
-python -m pytest test_model.py -v
+# Run all tasks at once
+bash run_pipeline.sh
+
+# Or run individually
+python task1_introduce_location.py
+python task2_fairness_analysis.py
+python task3_shap_explainability.py
+python task4_drift_detection.py
 ```
 
-### Expected Output
-```
-test_model.py::TestIrisModel::test_batch_prediction PASSED   [ 33%]
-test_model.py::TestIrisModel::test_model_loads PASSED        [ 66%]
-test_model.py::TestIrisModel::test_single_prediction PASSED  [100%]
-================ 3 passed in 1.38s ================
-```
+### Tech Stack
+- Python 3.9
+- scikit-learn — Model training
+- SHAP — Explainability
+- Fairlearn — Fairness auditing
+- SciPy — KS drift detection
+- matplotlib — Plots
 
 ---
 
-## CML Report
-CML (Continuous Machine Learning) automatically posts test results as a comment on every commit and pull request.
 
-Example CML comment posted automatically:
-```
-## Sanity Test Report
-===== test session starts =====
-test_model.py::TestIrisModel::test_batch_prediction PASSED   [ 33%]
-test_model.py::TestIrisModel::test_model_loads PASSED        [ 66%]
-test_model.py::TestIrisModel::test_single_prediction PASSED  [100%]
-================ 3 passed in 1.14s ================
-```
-
----
-
-## Pull Request Flow
-1. All week 4 work done on `week_04` branch
-2. Pull Request created: `week_04` → `main`
-3. CI automatically triggered on PR
-4. Both checks passed:
-   - IRIS ML CI / test-and-report (push) ✅
-   - IRIS ML CI / test-and-report (pull_request) ✅
-5. CML report posted as comment on PR
-6. PR successfully merged into `main`
-
----
-
-## How CI Fits Into the Pipeline
-
-```
-Git Push / PR
-    ↓
-GitHub Actions
-    ↓
-Train Model → Run pytest → CML Report
-    ↓
-Validated Pipeline ✅
-```
-
----
-
-## Tech Stack
-- **Python** 3.9
-- **scikit-learn** - Model training
-- **joblib** - Model serialization
-- **pytest / unittest** - Unit testing
-- **GitHub Actions** - CI/CD
-- **CML** - ML test reporting
-- **DVC** - Data and model versioning
-- **GCS** - Remote storage
-
----
