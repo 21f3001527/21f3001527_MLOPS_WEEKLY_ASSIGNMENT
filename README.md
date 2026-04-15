@@ -11,7 +11,7 @@
 
 
 ### Repository Structure
-
+```
 21f3001527_MLOPS_WEEKLY_ASSIGNMENT/
 ├── task1_introduce_location.py   # Adds location sensitive attribute
 ├── task2_fairness_analysis.py    # Fairlearn MetricFrame fairness audit
@@ -25,6 +25,7 @@
 ├── drift_detection.png           # Drift detection plot
 ├── requirements.txt              # Python dependencies
 └── README.md
+```
 
 
 ### Task 1 — Introduce Location Attribute
