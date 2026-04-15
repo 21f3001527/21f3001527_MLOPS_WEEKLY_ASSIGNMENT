@@ -5,7 +5,10 @@
 ## Week 9 — Explainability, Fairness & Drift Detection
 
 ### Overview
-This week we introduced explainability, fairness auditing, and drift monitoring into the IRIS classification pipeline using SHAP, Fairlearn, and KS statistical tests.
+- **Explainability** — using SHAP to explain model decisions
+- **Fairness Auditing** — using Fairlearn to check performance across groups
+- **Drift Monitoring** — using KS statistical tests to detect distribution shifts
+
 
 ### Repository Structure
 
