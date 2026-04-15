@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install pytest scikit-learn numpy joblib pandas shap matplotlib
+          pip install pytest scikit-learn numpy joblib pandas shap matplotlib fairlearn
 
       - name: Train Model
         run: python train.py
