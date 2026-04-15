@@ -90,3 +90,14 @@ python task4_drift_detection.py
 ---
 
 
+# python task1_introduce_location.py
+
+# python task2_fairness_analysis.py
+
+# python task3_shap_explainability.py
+
+# eog shap_virginica.png 
+
+# python task4_drift_detection.py
+
+<!-- eog drift-detection.pmg -->
